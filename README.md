@@ -1,35 +1,16 @@
 # sso-clojure
 
-FIXME: my new library.
+OAuth 2.0 with Keycloak and Clojure
 
-## Usage
+## Documentation
 
-FIXME: write usage documentation!
+Keycloak is used as our authorization server.
+The following command will get our dockerized keycloak up and running:
+> $ docker-compose -f keycloak-postgres.yml up
 
-Invoke a library API function from the command-line:
+Our Oauth client will be implemented in Clojure.
 
-    $ clojure -X core.sso-clojure/foo :a 1 :b '"two"'
-    {:a 1, :b "two"} "Hello, World!"
-
-Run the project's tests (they'll fail until you edit them):
-
-    $ clojure -M:test:runner
-
-Build a deployable jar of this library:
-
-    $ clojure -M:jar
-
-Install it locally:
-
-    $ clojure -M:install
-
-Deploy it to Clojars -- needs `CLOJARS_USERNAME` and `CLOJARS_PASSWORD` environment variables:
-
-    $ clojure -M:deploy
 
 ## License
 
-Copyright © 2021 Sguessou
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+* [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
