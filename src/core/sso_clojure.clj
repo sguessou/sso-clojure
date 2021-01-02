@@ -1,18 +1,28 @@
 (ns core.sso-clojure
   (:require
+   [cheshire.core :refer [generate-string]]
    [clj-http.client :as client]
+   [clojure.walk :refer [keywordize-keys]]
    [muuntaja.middleware :as muuntaja]
    [reitit.ring :as reitit]
    [ring.adapter.jetty :as jetty]
    [ring.util.http-response :as response]
    [ring.util.response :refer [redirect]]
    [ring.middleware.reload :refer [wrap-reload]]
+   [ring.util.codec :as codec]
    [selmer.parser :as selmer]
    [selmer.middleware :refer [wrap-error-page]]
    [taoensso.timbre :as timbre
     :refer [info log debug error warn]]))
 
-(def auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth")
+(def config
+  {:auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth"
+   :logout-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/logout"
+   :client-id "billingApp"
+   :redirect-uri "http://localhost:3000/auth-code-redirect"
+   :landing-page "http://localhost:3000"})
+
+(def app-var (atom {}))
 
 (defn wrap-nocache [handler]
   (fn [request]
@@ -32,24 +42,36 @@
 
 (defn home-handler [request]
   (response/ok
-   (selmer/render-file "login.html" {:title "~=[L0GIN]=~"})))
+   (selmer/render-file "login.html" {:title "~=[λ RuL3z!]=~"})))
 
 (defn login-handler [request]
   ;; create a redirect URL for authentication endpoint.
-  (let [query-string (client/generate-query-string
-                      {:client_id "billingApp"
+  (let [client_id (:client-id config)
+        redirect_uri (:redirect-uri config)
+        query-string (client/generate-query-string
+                      {:client_id client_id
                        :response_type "code"
-                       :redirect_uri "http://localhost:3000/auth-code-redirect"})]
+                       :redirect_uri redirect_uri})
+        auth-url (:auth-url config)]
     (redirect (str auth-url "?" query-string))))
 
 (defn auth-code-redirect [request]
-  (info (:query-string request))
-  (response/ok
-   (str "hello world!")))
+  (info {:query-string (:query-string request)})
+  (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
+        landing-page (:landing-page config)]
+    (swap! app-var assoc :code (:code query-params)
+           :session-state (:session_state query-params))
+    (redirect landing-page)))
+
+(defn logout-handler [request]
+  (let [query-string (client/generate-query-string {:redirect_uri (:landing-page config)})
+        logout-url (str (:logout-url config) "?" query-string)]
+    (redirect logout-url)))
 
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
+   ["/logout" {:get logout-handler}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
 
 (def handler
