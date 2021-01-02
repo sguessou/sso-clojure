@@ -42,7 +42,9 @@
 
 (defn home-handler [request]
   (response/ok
-   (selmer/render-file "login.html" {:title "~=[λ RuL3z!]=~"})))
+   (selmer/render-file "login.html" {:title "~=[λ RuL3z!]=~"
+                                     :session (:session-state @app-var)
+                                     :code (:code @app-var)})))
 
 (defn login-handler [request]
   ;; create a redirect URL for authentication endpoint.
@@ -66,6 +68,7 @@
 (defn logout-handler [request]
   (let [query-string (client/generate-query-string {:redirect_uri (:landing-page config)})
         logout-url (str (:logout-url config) "?" query-string)]
+    (reset! app-var {})
     (redirect logout-url)))
 
 (def routes
