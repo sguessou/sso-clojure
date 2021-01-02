@@ -8,8 +8,11 @@
    [ring.util.response :refer [redirect]]
    [ring.middleware.reload :refer [wrap-reload]]
    [selmer.parser :as selmer]
-   [selmer.middleware :refer [wrap-error-page]]))
+   [selmer.middleware :refer [wrap-error-page]]
+   [taoensso.timbre :as timbre
+    :refer [info log debug error warn]]))
 
+(def auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth")
 
 (defn wrap-nocache [handler]
   (fn [request]
@@ -32,11 +35,22 @@
    (selmer/render-file "login.html" {:title "~=[L0GIN]=~"})))
 
 (defn login-handler [request]
-  (redirect "http://www.google.com"))
+  ;; create a redirect URL for authentication endpoint.
+  (let [query-string (client/generate-query-string
+                      {:client_id "billingApp"
+                       :response_type "code"
+                       :redirect_uri "http://localhost:3000/auth-code-redirect"})]
+    (redirect (str auth-url "?" query-string))))
+
+(defn auth-code-redirect [request]
+  (info (:query-string request))
+  (response/ok
+   (str "hello world!")))
 
 (def routes
   [["/" {:get home-handler}]
-   ["/login" {:get login-handler}]])
+   ["/login" {:get login-handler}]
+   ["/auth-code-redirect" {:get auth-code-redirect}]])
 
 (def handler
   (reitit/routes
