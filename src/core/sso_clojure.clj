@@ -1,6 +1,6 @@
 (ns core.sso-clojure
   (:require
-   [cheshire.core :refer [generate-string]]
+   [cheshire.core :refer [generate-string parse-string]]
    [clj-http.client :as client]
    [clojure.walk :refer [keywordize-keys]]
    [muuntaja.middleware :as muuntaja]
@@ -18,7 +18,9 @@
 (def config
   {:auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth"
    :logout-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/logout"
+   :token-endpoint "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/token"
    :client-id "billingApp"
+   :client-password "fe0a7e01-8b66-4706-8f37-e7d333c29e6f"
    :redirect-uri "http://localhost:3000/auth-code-redirect"
    :landing-page "http://localhost:3000"})
 
@@ -44,7 +46,8 @@
   (response/ok
    (selmer/render-file "login.html" {:title "~=[λ RuL3z!]=~"
                                      :session (:session-state @app-var)
-                                     :code (:code @app-var)})))
+                                     :code (:code @app-var)
+                                     :access-token (get-in @app-var [:token "access_token"])})))
 
 (defn login-handler [request]
   ;; create a redirect URL for authentication endpoint.
@@ -71,9 +74,23 @@
     (reset! app-var {})
     (redirect logout-url)))
 
+(defn exchange-token-handler [request]
+  (when-let [token
+             (client/post (:token-endpoint config)
+                          {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                           :basic-auth [(:client-id config) (:client-password config)]
+                           :form-params {:grant_type "authorization_code"
+                                         :code (:code @app-var)
+                                         :redirect_uri (:redirect-uri config)
+                                         :client_id (:client-id config)}})]
+    (swap! app-var assoc :token (-> (:body token) parse-string))
+    (info {:token (:token @app-var)})
+    (redirect (:landing-page config))))
+
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
+   ["/exchange-token" {:get exchange-token-handler}]
    ["/logout" {:get logout-handler}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
 

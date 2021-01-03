@@ -2,8 +2,8 @@
 
 ![Authorization Code Flow image](images/authorization_code_flow.png)
 
-The purpose of this project is to showcase the use of Keycloak as an authorization server . We will be using Clojure for building the authorization client and later on the other resources.
-As time goes on, other features will be added and documented:
+The purpose of this project is to showcase the use of Keycloak as an authorization server. We will be using Clojure for building the authorization client and other protected resources.
+As time goes on, other features will be added and documented. The possible features can be seen in the listing below:
 
 * Protecting resources with JWT tokens and added security with PKCE
 * Redis for caching
@@ -28,16 +28,16 @@ Use the following configuration for your client:
 * Access type -> `confidential`
 * Root URL -> `http://localhost:3000`
 
-To get the endpoints in use in our authorization client, go to the test realm you created earlier and click on the endpoints link. You should get a similar listing as in the pic below:
+To list the Keycloak endpoints in use in our authorization client, load your test realm page and click on the endpoints link. You should get a similar listing as in the pic below:
 
 ![Openid-configuration image](images/openid-configuration.png)
 
-And lastly add a new test user.
+Lastly add a new user for login purposes.
 
 ## Authorization Client (Clojure)
 The Clojure projects are managed with the Clojure CLI tool. The `deps.edn` file holds the configuration and the needed dependencies.
 
-Run this command to load the client server at port 3000:
+Run this command to run the client server at port 3000:
 ```
 $ clj -M -m core.sso-clojure
 ```
