@@ -47,7 +47,9 @@
    (selmer/render-file "login.html" {:title "~=[λ RuL3z!]=~"
                                      :session (:session-state @app-var)
                                      :code (:code @app-var)
-                                     :access-token (get-in @app-var [:token "access_token"])})))
+                                     :access-token (get-in @app-var [:token :access_token])
+                                     :refresh-token (get-in @app-var [:token :refresh_token])
+                                     :scope (get-in @app-var [:token :scope])})))
 
 (defn login-handler [request]
   ;; create a redirect URL for authentication endpoint.
@@ -83,7 +85,7 @@
                                          :code (:code @app-var)
                                          :redirect_uri (:redirect-uri config)
                                          :client_id (:client-id config)}})]
-    (swap! app-var assoc :token (-> (:body token) parse-string))
+    (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
     (info {:token (:token @app-var)})
     (redirect (:landing-page config))))
 

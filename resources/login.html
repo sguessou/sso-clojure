@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-
 <div class="table-container">
   <table class="table">
   <thead>
@@ -22,14 +21,25 @@
       <td>{{code}}</td>
      </tr>
      <tr>
-      <th>2</th>
+      <th>3</th>
       <td>Access Token</td>
       <td>{{access-token}}</td>
      </tr>
+      <tr>
+      <th>4</th>
+      <td>Refresh Token</td>
+      <td>{{refresh-token}}</td>
+      </tr>
+      <tr>
+      <th>3</th>
+      <td>Scope</td>
+      <td>{{scope}}</td>
+       </tr>
 
   </tbody>
   </table>
 </div>
+
 
 
 {% endblock %}
