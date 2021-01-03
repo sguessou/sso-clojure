@@ -1,19 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
     <title>{{title}}</title>
-    </head>
-    <body>
-      <div>
-        <a href="/login"><button>Login with Keycloak</button></a>
-      </div>
-      <div>
-        <a href="/logout"><button>Logout</button></a>
-      </div>
-      {% block content %}default content{% endblock %}
-    </body>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+  </head>
+  <body>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="#">
+      <img src="clj.png">
+    </a>
+
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div id="navbarBasicExample" class="navbar-menu">
+    <div class="navbar-start">
+      <a href="/login" class="navbar-item">
+        Login
+      </a>
+
+      <a href="/logout" class="navbar-item">
+        Logout
+      </a>
+
+      
+    </div>
+
+  </div>
+</nav>
+
+<div class="container is-widescreen">
+  {% block content %}default content{% endblock %}
+</div>
+
+  </body>
 </html>

@@ -1,7 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 
-<p>auth. code: {{code}}</p>
-<p>session: {{session}}</p>
+<div class="table-container">
+  <table class="table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Key</abbr></th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>Session</td>
+      <td>{{session}}</td>
+    </tr>
+     <tr>
+      <th>2</th>
+      <td>Code</td>
+      <td>{{code}}</td>
+     </tr>
+  </tbody>
+  </table>
+</div>
+
 
 {% endblock %}
