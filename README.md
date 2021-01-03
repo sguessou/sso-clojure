@@ -36,11 +36,11 @@ Lastly add a new user for login purposes.
 
 ## Authorization Client (Clojure)
 The Clojure projects are managed with the Clojure CLI tool. The `deps.edn` file holds the configuration and the needed dependencies.
-
-Run this command to run the client server at port 3000:
+Cd into the `clj-auth-service` directory and execute this command:
 ```
 $ clj -M -m core.sso-clojure
 ```
+Our authorization service will be running at port `3000`.
 
 ## License
 

@@ -76,15 +76,17 @@
     (reset! app-var {})
     (redirect logout-url)))
 
+(defn get-token []
+  (client/post (:token-endpoint config)
+               {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                :basic-auth [(:client-id config) (:client-password config)]
+                :form-params {:grant_type "authorization_code"
+                              :code (:code @app-var)
+                              :redirect_uri (:redirect-uri config)
+                              :client_id (:client-id config)}}))
+
 (defn exchange-token-handler [request]
-  (when-let [token
-             (client/post (:token-endpoint config)
-                          {:headers {"Content-Type" "application/x-www-form-urlencoded"}
-                           :basic-auth [(:client-id config) (:client-password config)]
-                           :form-params {:grant_type "authorization_code"
-                                         :code (:code @app-var)
-                                         :redirect_uri (:redirect-uri config)
-                                         :client_id (:client-id config)}})]
+  (let [token (get-token)]
     (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
     (info {:token (:token @app-var)})
     (redirect (:landing-page config))))
