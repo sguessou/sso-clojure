@@ -1,4 +1,4 @@
-# OAuth 2.0 with Keycloak and Clojure
+# OAuth 2.0 with Keycloak and Clojure (WIP!)
 
 ![Authorization Code Flow image](images/authorization_code_flow.png)
 
