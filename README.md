@@ -19,11 +19,19 @@ The following command will get our dockerized keycloak up and running:
 ```
 $ docker-compose -f keycloak-postgres.yml up
 ```
-Keycloak will be available at this address: `http://localhost:8080/auth`
-Log in with these credentials: `admin / admin`
-You will need to create a new realm for testing purposes. Once the realm is created, add a client to it.
+Keycloak will be available at this address: `http://localhost:8080/auth`  
+You can log in as administrator with these credentials: `admin / admin`   
+The following command will allow us to import the preconfigured keycloak testing environment:
+```
+$ docker exec -it mykeycloak /opt/jboss/keycloak/bin/standalone.sh \
+-Djboss.socket.binding.port-offset=100 \
+-Dkeycloak.migration.action=import \
+-Dkeycloak.migration.provider=singleFile \
+-Dkeycloak.migration.file=/opt/jboss/keycloak/imports/my_realm.json
+```
+The command will generate for us a test realm (Sso-test), a client (billingApp) and finally a test user with these credentials -> `bob / return0`.
 
-Use the following configuration for your client:
+If you choose to create your own test keycloak environment, use the following configuration for your client:
 * Client protocol -> `openid-connect`
 * Access type -> `confidential`
 * Root URL -> `http://localhost:3000`

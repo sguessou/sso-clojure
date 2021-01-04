@@ -15,6 +15,9 @@ services:
         POSTGRES_PASSWORD: password
   keycloak:
       image: quay.io/keycloak/keycloak:latest
+      container_name: mykeycloak
+      volumes:
+        - ./imports:/opt/jboss/keycloak/imports
       environment:
         DB_VENDOR: POSTGRES
         DB_ADDR: postgres
