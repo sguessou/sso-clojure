@@ -37,7 +37,8 @@
    (generate-string services)))
 
 (def routes
-  [["/" {:get home-handler}]])
+  [["/billing/v1" 
+    ["/services" {:get home-handler}]]])
 
 (def handler
   (reitit/routes

@@ -50,6 +50,14 @@ $ clj -M -m core.sso-clojure
 ```
 Our authorization service will be running at port `3000`.
 
+## Billing Service Client (Clojure)
+To run the app, CD into the `billing-service` directory and run this command:
+```
+$ clj -M -m core.billing-service
+```
+
+The `Services` link on the landing page is mapped to a handler, that fetches data from this service.
+
 ## License
 
 * [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)

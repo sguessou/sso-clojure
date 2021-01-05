@@ -12,8 +12,8 @@
    [ring.util.codec :as codec]
    [selmer.parser :as selmer]
    [selmer.middleware :refer [wrap-error-page]]
-   [taoensso.timbre :as timbre
-    :refer [info log debug error warn]]))
+   [slingshot.slingshot :refer [try+ throw+]]
+   [taoensso.timbre :as log]))
 
 (def config
   {:auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth"
@@ -22,7 +22,8 @@
    :client-id "billingApp"
    :client-password "fe0a7e01-8b66-4706-8f37-e7d333c29e6f"
    :redirect-uri "http://localhost:3000/auth-code-redirect"
-   :landing-page "http://localhost:3000"})
+   :landing-page "http://localhost:3000"
+   :services-endpoint "http://localhost:4000/billing/v1/services"})
 
 (def app-var (atom {}))
 
@@ -49,7 +50,8 @@
                                      :code (:code @app-var)
                                      :access-token (get-in @app-var [:token :access_token])
                                      :refresh-token (get-in @app-var [:token :refresh_token])
-                                     :scope (get-in @app-var [:token :scope])})))
+                                     :scope (get-in @app-var [:token :scope])
+                                     :services (:services @app-var)})))
 
 (defn login-handler [request]
   ;; create a redirect URL for authentication endpoint.
@@ -63,7 +65,7 @@
     (redirect (str auth-url "?" query-string))))
 
 (defn auth-code-redirect [request]
-  (info {:query-string (:query-string request)})
+  (log/info ::auth-redirect {:query-string (:query-string request)})
   (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
         landing-page (:landing-page config)]
     (swap! app-var assoc :code (:code query-params)
@@ -88,13 +90,30 @@
 (defn exchange-token-handler [request]
   (let [token (get-token)]
     (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
-    (info {:token (:token @app-var)})
+    (log/info ::fetch-token {:token (:token @app-var)})
     (redirect (:landing-page config))))
+
+(defn services-handler [request]
+  (if-let [services (try+ 
+                     (client/get (:services-endpoint config)
+                                 {:socket-timeout 500
+                                  :connection-timeout 500})
+                     (catch Object _
+                       (log/error ::services "Upstream error")
+                       nil))]
+    (do
+      (swap! app-var assoc :services (-> services :body parse-string (get "services")))
+      (log/info ::services {:services services})
+      (redirect (:landing-page config)))
+    (do 
+      (swap! app-var assoc :service {:services []})
+      (redirect (:landing-page config)))))
 
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
    ["/exchange-token" {:get exchange-token-handler}]
+   ["/services" {:get services-handler}]
    ["/logout" {:get logout-handler}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
 
