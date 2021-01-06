@@ -29,7 +29,7 @@ $ docker exec -it mykeycloak /opt/jboss/keycloak/bin/standalone.sh \
 -Dkeycloak.migration.provider=singleFile \
 -Dkeycloak.migration.file=/opt/jboss/keycloak/imports/my_realm.json
 ```
-The command will generate for us a test realm (Sso-test), a client (billingApp) and finally a test user with these credentials -> `bob / return0`.
+The command will generate for us a test realm (Sso-test), an authorization client (billingApp) a token checker client (tokenChecker) and finally a test user with these credentials -> `bob / return0`.
 
 If you choose to create your own test keycloak environment, use the following configuration for your client:
 * Client protocol -> `openid-connect`
