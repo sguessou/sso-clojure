@@ -8,11 +8,16 @@
              [ring.util.http-response :as response]
              [ring.util.response :refer [redirect]]
              [ring.middleware.reload :refer [wrap-reload]]
+             [ring.middleware.params :refer [wrap-params]]
              [ring.util.codec :as codec]
              [selmer.parser :as selmer]
              [selmer.middleware :refer [wrap-error-page]]
-             [taoensso.timbre :as timbre
-              :refer [info log debug error warn]]))
+             [taoensso.timbre :as log]))
+
+
+(def config {:token-introspection "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/token/introspect"
+             :client-id "tokenChecker"
+             :client-password "b5393f3f-9149-4d6f-bf7d-edc36a504388"})
 
 (def services {:services ["electric" "phone" "internet" "water"]})
 
@@ -32,13 +37,69 @@
         (:remote-addr request)
         "</body></html>")))
 
-(defn home-handler [request]
-  (response/ok
-   (generate-string services)))
+(defn- get-token [request]
+  (cond
+    ;; headers
+    (some? (get-in request [:headers "authorization"])) 
+    (do 
+      (log/info ::get-token {:method :authorization})
+      (get-in request [:headers "authorization"]))
+    
+    ;; form-params
+    (some? (get-in request [:form-params "access_token"]))
+    (do
+      (log/info ::get-token {:method :form-body})
+      (get-in request [:form-params "access_token"]))
+    
+    ;; query
+    (some? (get-in request [:query-params "access_token"]))
+    (do 
+      (log/info ::get-token {:method :query-params})
+      (get-in request [:query-params "access_token"]))
+    
+    :else nil))
+
+(defn- validate-token [token]
+  (let [response
+        (client/post (:token-introspection config)
+                     {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                      :basic-auth [(:client-id config) (:client-password config)]
+                      :form-params {:token_type_hint "requesting_party_token"
+                                    :token token}})
+        active (-> response
+                   :body
+                   parse-string
+                   (get "active"))]
+    (log/info ::validate-token {:active active})
+    active))
+
+(defn services-handler [request]
+  (log/info ::services-handler {:headers (:headers request)})
+  (if-let [token (get-token request)]
+    (do
+      (if (= true (validate-token token))
+        (response/ok
+         (generate-string services))
+        (response/bad-request
+         "Invalid token")))
+    (response/forbidden "Missing access token")))
+
+(defn test-request-handler [request]
+  (let [{params :params 
+         form-params :form-params 
+         query-params :query-params
+         headers :headers} request]
+    (log/info ::services-post {:request {:form-params form-params
+                                         :query-params query-params
+                                         :params params
+                                         :headers headers
+                                         :result (validate-token (get-token request))}})
+    (response/ok "OK")))
 
 (def routes
-  [["/billing/v1" 
-    ["/services" {:get home-handler}]]])
+  [["/billing/v1" {:middleware [wrap-params]}
+    ["/services" {:get services-handler
+                  :post test-request-handler}]]])
 
 (def handler
   (reitit/routes
