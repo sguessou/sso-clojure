@@ -90,13 +90,14 @@
 (defn exchange-token-handler [request]
   (let [token (get-token)]
     (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
-    (log/info ::fetch-token {:token (:token @app-var)})
+    (log/info ::exchange-token {:token (get-in @app-var [:token :token_type])})
     (redirect (:landing-page config))))
 
 (defn services-handler [request]
   (if-let [services (try+ 
                      (client/get (:services-endpoint config)
-                                 {:socket-timeout 500
+                                 {:headers {"Authorization" (str "Bearer " (get-in @app-var [:token :access_token]))}
+                                  :socket-timeout 500
                                   :connection-timeout 500})
                      (catch Object _
                        (log/error ::services "Upstream error")

@@ -65,7 +65,7 @@
                      {:headers {"Content-Type" "application/x-www-form-urlencoded"}
                       :basic-auth [(:client-id config) (:client-password config)]
                       :form-params {:token_type_hint "requesting_party_token"
-                                    :token token}})
+                                    :token (clojure.string/replace token #"Bearer " "")}})
         active (-> response
                    :body
                    parse-string
@@ -74,7 +74,7 @@
     active))
 
 (defn services-handler [request]
-  (log/info ::services-handler {:headers (:headers request)})
+  (log/info ::services-handler {:headers (keys (:headers request))})
   (if-let [token (get-token request)]
     (do
       (if (= true (validate-token token))
