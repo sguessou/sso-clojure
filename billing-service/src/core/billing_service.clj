@@ -1,5 +1,5 @@
 (ns core.billing-service
-  (:require  [cheshire.core :refer [generate-string parse-string]]
+  (:require  [cheshire.core :refer [generate-string parse-string decode]]
              [clj-http.client :as client]
              [clojure.walk :refer [keywordize-keys]]
              [muuntaja.middleware :as muuntaja]
@@ -12,7 +12,8 @@
              [ring.util.codec :as codec]
              [selmer.parser :as selmer]
              [selmer.middleware :refer [wrap-error-page]]
-             [taoensso.timbre :as log]))
+             [taoensso.timbre :as log])
+  (:import [org.apache.commons.codec.binary Base64]))
 
 
 (def config {:token-introspection "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/token/introspect"
@@ -73,13 +74,24 @@
     (log/info ::validate-token {:active active})
     active))
 
+(defn decode-token-claim [token]
+  (let [claim (-> token
+                  (clojure.string/split #"\.")
+                  second
+                  Base64/decodeBase64
+                  String.
+                  decode)]
+    (log/info ::check-token-scope {:claim claim})
+    claim))
+
 (defn services-handler [request]
   (log/info ::services-handler {:headers (keys (:headers request))})
   (if-let [token (get-token request)]
     (do
       (if (= true (validate-token token))
-        (response/ok
-         (generate-string services))
+        (do
+          (response/ok
+           (generate-string services)))
         (response/bad-request
          "Invalid token")))
     (response/forbidden "Missing access token")))
