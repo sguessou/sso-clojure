@@ -13,9 +13,10 @@ As time goes on, other features will be added and documented. The possible featu
 
 ## Keycloak
 
-Keycloak is used as our authorization server.
+Keycloak is used as our authorization server and access management solution.
 
-The following command will get our dockerized keycloak up and running:
+I'll be running a containerized keycloak, using the docker-compose tool.  
+To boot the container, run the command:
 ```
 $ docker-compose -f keycloak-postgres.yml up
 ```
@@ -29,7 +30,13 @@ $ docker exec -it mykeycloak /opt/jboss/keycloak/bin/standalone.sh \
 -Dkeycloak.migration.provider=singleFile \
 -Dkeycloak.migration.file=/opt/jboss/keycloak/imports/my_realm.json
 ```
-The command will generate for us a test realm (Sso-test), an authorization client (billingApp) a token checker client (tokenChecker) and finally a test user with these credentials -> `bob / return0`.
+The following elements will be generated for us automatically: 
+* Test realm -> `Sso-test`
+* Authorization client -> `billingApp`
+* Token checker client -> `tokenChecker` 
+* Test user with credentials -> `bob / return0`
+* New client scope -> `getBillingService`   
+The `getBillingService` scope is required in the token when requesting services from the protected resource server. 
 
 If you choose to create your own test keycloak environment, use the following configuration for your client:
 * Client protocol -> `openid-connect`
@@ -43,20 +50,22 @@ To list the Keycloak endpoints in use in our authorization client, load your tes
 Lastly add a new user for login purposes.
 
 ## Authorization Client (Clojure)
-The Clojure projects are managed with the Clojure CLI tool. The `deps.edn` file holds the configuration and the needed dependencies.
-Cd into the `clj-auth-service` directory and execute this command:
+The Clojure projects are managed with the Clojure CLI tool. The `deps.edn` file holds the configuration and the needed dependencies.  
+To run the service, cd into the `clj-auth-service` directory and execute the command:
 ```
 $ clj -M -m core.sso-clojure
 ```
-Our authorization service will be running at port `3000`.
+The authorization service will be running on port `3000`.
+
+The `Services` link on the landing page is mapped to a handler, that fetches data from the `Billing` service which is protected.   
+We need to be logged in and have a valid token with the right scope in order to successfully request the services.
 
 ## Billing Service Client (Clojure)
-To run the app, CD into the `billing-service` directory and run this command:
+To run the service, CD into the `billing-service` directory and run the command:
 ```
 $ clj -M -m core.billing-service
 ```
-
-The `Services` link on the landing page is mapped to a handler, that fetches data from this service.
+The protected resource server will be running on port `4000`.
 
 ## License
 

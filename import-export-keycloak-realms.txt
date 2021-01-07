@@ -4,5 +4,8 @@ docker exec -it mykeycloak /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.
 # copy file from container to local file system
 docker cp <container>:<src-path> <local-dest-path>
 
+# e.g.
+docker cp mykeycloak:/tmp/my_realm.json ~/my_realm.json
+
 # import json db file into keycloak
 docker exec -it mykeycloak /opt/jboss/keycloak/bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file=/opt/jboss/keycloak/imports/my_realm.json

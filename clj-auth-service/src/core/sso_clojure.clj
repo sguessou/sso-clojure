@@ -64,20 +64,6 @@
         auth-url (:auth-url config)]
     (redirect (str auth-url "?" query-string))))
 
-(defn auth-code-redirect [request]
-  (log/info ::auth-redirect {:query-string (:query-string request)})
-  (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
-        landing-page (:landing-page config)]
-    (swap! app-var assoc :code (:code query-params)
-           :session-state (:session_state query-params))
-    (redirect landing-page)))
-
-(defn logout-handler [request]
-  (let [query-string (client/generate-query-string {:redirect_uri (:landing-page config)})
-        logout-url (str (:logout-url config) "?" query-string)]
-    (reset! app-var {})
-    (redirect logout-url)))
-
 (defn get-token []
   (client/post (:token-endpoint config)
                {:headers {"Content-Type" "application/x-www-form-urlencoded"}
@@ -87,11 +73,27 @@
                               :redirect_uri (:redirect-uri config)
                               :client_id (:client-id config)}}))
 
-(defn exchange-token-handler [request]
+(defn- exchange-token []
   (let [token (get-token)]
     (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
     (log/info ::exchange-token {:token (get-in @app-var [:token :token_type])})
     (redirect (:landing-page config))))
+
+(defn auth-code-redirect [request]
+  (log/info ::auth-redirect {:query-string (:query-string request)})
+  (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
+        landing-page (:landing-page config)]
+    (swap! app-var assoc :code (:code query-params)
+           :session-state (:session_state query-params))
+    (exchange-token)))
+
+(defn logout-handler [request]
+  (let [query-string (client/generate-query-string {:redirect_uri (:landing-page config)})
+        logout-url (str (:logout-url config) "?" query-string)]
+    (reset! app-var {})
+    (redirect logout-url)))
+
+
 
 (defn services-handler [request]
   (if-let [services (try+ 
@@ -113,7 +115,6 @@
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
-   ["/exchange-token" {:get exchange-token-handler}]
    ["/services" {:get services-handler}]
    ["/logout" {:get logout-handler}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
