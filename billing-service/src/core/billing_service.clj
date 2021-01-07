@@ -74,7 +74,7 @@
     (log/info ::validate-token {:active active})
     active))
 
-(defn decode-token-claim [token]
+(defn- decode-token-claim [token]
   (let [claim (-> token
                   (clojure.string/split #"\.")
                   second
@@ -88,13 +88,25 @@
   (log/info ::services-handler {:headers (keys (:headers request))})
   (if-let [token (get-token request)]
     (do
-      (if (= true (validate-token token))
-        (do
-          (response/ok
-           (generate-string services)))
-        (response/bad-request
-         "Invalid token")))
-    (response/forbidden "Missing access token")))
+      (let [valid (validate-token token)
+            scope (-> (decode-token-claim token)
+                      (get "scope")
+                      (clojure.string/split #" ")
+                      set)]
+        (log/info ::services-handler {:valid-token valid :scope scope})
+        (cond
+          (false? valid) 
+          (do 
+            (log/info ::services-handler {:error "Invalid token"})               
+            (response/bad-request "Invalid token"))
+          (nil? (get scope "getBillingService")) 
+          (do
+            (log/info ::services-handler {:error "Invalid token scope. Required scope [getBillingService]"})
+            (response/bad-request "Invalid scope"))
+          :else (response/ok (generate-string services)))))
+    (do
+      (log/info ::services-handler {:error "Missing access token"})
+      (response/forbidden "Missing access token"))))
 
 (defn test-request-handler [request]
   (let [{params :params 
