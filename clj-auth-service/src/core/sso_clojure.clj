@@ -25,7 +25,7 @@
    :landing-page "http://localhost:3000"
    :services-endpoint "http://localhost:4000/billing/v1/services"})
 
-(def app-var (atom {}))
+(def app-var (atom {:state #{}}))
 
 (defn wrap-nocache [handler]
   (fn [request]
@@ -54,15 +54,18 @@
                                      :services (:services @app-var)})))
 
 (defn login-handler [request]
-  ;; create a redirect URL for authentication endpoint.
-  (let [client_id (:client-id config)
-        redirect_uri (:redirect-uri config)
-        query-string (client/generate-query-string
-                      {:client_id client_id
-                       :response_type "code"
-                       :redirect_uri redirect_uri})
-        auth-url (:auth-url config)]
-    (redirect (str auth-url "?" query-string))))
+  (let [state (.toString (java.util.UUID/randomUUID))]
+    (swap! app-var assoc :state (conj (:state @app-var) state))
+    ;; create a redirect URL for authentication endpoint.
+    (let [client_id (:client-id config)
+          redirect_uri (:redirect-uri config)
+          query-string (client/generate-query-string
+                        {:client_id client_id
+                         :response_type "code"
+                         :redirect_uri redirect_uri
+                         :state state})
+          auth-url (:auth-url config)]
+      (redirect (str auth-url "?" query-string)))))
 
 (defn get-token []
   (client/post (:token-endpoint config)
@@ -82,10 +85,18 @@
 (defn auth-code-redirect [request]
   (log/info ::auth-redirect {:query-string (:query-string request)})
   (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
-        landing-page (:landing-page config)]
-    (swap! app-var assoc :code (:code query-params)
-           :session-state (:session_state query-params))
-    (exchange-token)))
+        landing-page (:landing-page config)
+        state (:state @app-var)]
+    (log/info ::auth-code-redirect {:state (:state query-params)})
+    (if (not (contains? state (:state query-params)))
+      (do
+        (log/info ::auth-code-redirect {:error "State Error"})
+        (response/bad-request "Error"))
+      (do
+        (swap! app-var assoc :code (:code query-params)
+               :session-state (:session_state query-params)
+               :state (disj state (:state query-params)))
+        (exchange-token)))))
 
 (defn logout-handler [request]
   (let [query-string (client/generate-query-string {:redirect_uri (:landing-page config)})
