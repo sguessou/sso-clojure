@@ -13,7 +13,12 @@
    [selmer.parser :as selmer]
    [selmer.middleware :refer [wrap-error-page]]
    [slingshot.slingshot :refer [try+ throw+]]
-   [taoensso.timbre :as log]))
+   [taoensso.timbre :as log]
+   [taoensso.carmine :as car]))
+
+(def redis-conn {:pool {} :spec {:host "127.0.0.1"
+                                 :port 6377}})
+(defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
 
 (def config
   {:auth-url "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth"
