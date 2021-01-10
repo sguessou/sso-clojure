@@ -30,7 +30,7 @@
    :landing-page "http://localhost:3000"
    :services-endpoint "http://localhost:4000/billing/v1/services"})
 
-(def app-var (atom {:state #{}}))
+(def app-var (atom {}))
 
 (defn wrap-nocache [handler]
   (fn [request]
@@ -60,7 +60,7 @@
 
 (defn login-handler [request]
   (let [state (.toString (java.util.UUID/randomUUID))]
-    (swap! app-var assoc :state (conj (:state @app-var) state))
+    (wcar* (car/set (str "STATE-" state) state "EX" 180))
     ;; create a redirect URL for authentication endpoint.
     (let [client_id (:client-id config)
           redirect_uri (:redirect-uri config)
@@ -91,16 +91,16 @@
   (log/info ::auth-redirect {:query-string (:query-string request)})
   (let [query-params (-> request :query-string codec/form-decode keywordize-keys)
         landing-page (:landing-page config)
-        state (:state @app-var)]
-    (log/info ::auth-code-redirect {:state (:state query-params)})
-    (if (not (contains? state (:state query-params)))
+        state (:state query-params)]
+    (log/info ::auth-code-redirect {:state state})
+    (if (nil? (wcar* (car/get (str "STATE-" state))))
       (do
         (log/info ::auth-code-redirect {:error "State Error"})
         (response/bad-request "Error"))
       (do
         (swap! app-var assoc :code (:code query-params)
-               :session-state (:session_state query-params)
-               :state (disj state (:state query-params)))
+               :session-state (:session_state query-params))
+        (wcar* (car/set (str "STATE-" state) nil))
         (exchange-token)))))
 
 (defn logout-handler [request]
@@ -108,8 +108,6 @@
         logout-url (str (:logout-url config) "?" query-string)]
     (reset! app-var {})
     (redirect logout-url)))
-
-
 
 (defn services-handler [request]
   (if-let [services (try+ 
