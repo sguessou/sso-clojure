@@ -9,7 +9,8 @@ As time goes on, other features will be added and documented. The possible featu
 * Redis for caching
 * UI with Clojurescript (Hiccup, Reagent & maybe Re-frame as well ;))
 * CI/CD (not sure about the technologies yet...)
-* Tests
+* Unit tests
+* Load testing (clj-gatling)
 
 ## Keycloak
 
@@ -66,6 +67,12 @@ To run the service, CD into the `billing-service` directory and run the command:
 $ clj -M -m core.billing-service
 ```
 The protected resource server will be running on port `4000`.
+
+## Redis
+Redis is running on port `6377` and can be accessed with `redis-cli`:
+```
+$ redis-cli -p 6377
+```
 
 ## License
 

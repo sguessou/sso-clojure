@@ -110,6 +110,9 @@
     (redirect logout-url)))
 
 (defn services-handler [request]
+  (log/info ::services-handler {:addr (:remote-addr request)})
+  ;; redis is used here for debugging purposes only
+  #_(wcar* (car/set (str "TEST-TOKEN-" (.toString (java.util.UUID/randomUUID))) "TEST" "EX" 180))
   (if-let [services (try+ 
                      (client/get (:services-endpoint config)
                                  {:headers {"Authorization" (str "Bearer " (get-in @app-var [:token :access_token]))}
@@ -117,7 +120,7 @@
                                   :connection-timeout 500})
                      (catch Object _
                        (log/error ::services "Upstream error")
-                       nil))]
+                       (response/bad-request "upstream-error")))]
     (do
       (swap! app-var assoc :services (-> services :body parse-string (get "services")))
       (log/info ::services {:services services})
