@@ -1,0 +1,16 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/dev"
+  "src/main"
+  "src/test"]
+
+ :dependencies
+ [[reagent "1.0.0"]
+  [metosin/reitit "0.5.11"]]
+ 
+ 
+ :dev-http {8081 "public"}
+ :builds
+{:frontend
+ {:target :browser
+  :modules {:main {:init-fn frontend.app/init}}}}}

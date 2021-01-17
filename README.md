@@ -74,6 +74,10 @@ Redis is running on port `6377` and can be accessed with `redis-cli`:
 $ redis-cli -p 6377
 ```
 
+## Implicit Client (CLJS project)
+```
+$ npx create-cljs-project implicit-client
+```
 ## License
 
 * [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
