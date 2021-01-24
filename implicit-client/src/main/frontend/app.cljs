@@ -10,7 +10,23 @@
 
 (defonce match (r/atom nil))
 
-(defonce token (r/atom nil))
+(defonce state (r/atom {}))
+
+(defn parse-token []
+  (let [token (.. js/window -location -hash)]
+    (let [h (-> token
+                (s/replace #"#" "")
+                (s/split #"&"))
+          r (apply hash-map (reduce (fn [acc e]
+                                      (concat acc (s/split e #"=")))
+                                    []
+                                    h))
+          m {:access_token (get r "access_token")
+             :expires_in (get r "expires_in")
+             :session_state (get r "session_state")
+             :token_type (get r "token_type")}]
+      (swap! state assoc :token m)
+      (js/console.log (str (:token @state))))))
 
 (defn current-page []
   [:div.container
@@ -20,9 +36,10 @@
    [:div [:a {:href "/logout"} "Logout"]]
    [:h1.title.is-4 "Implicit Grant Type"]
    (if @match
-       (let [view (:view (:data @match))]
+     (let [view (:view (:data @match))]
          [view @match]))
-   [:pre (with-out-str (fedn/pprint @match))]])
+   [:pre (with-out-str (fedn/pprint @match))]
+   [:pre (with-out-str (fedn/pprint @state))]])
 
 (defn home-page []
   [:div.container
@@ -33,17 +50,6 @@
    [:h1.title.is-4 "Services"]])
 
 (defn callback []
-  (js/console.log (:token @token))
-  (let [token (:token @token)]
-    (when token
-      (let [h (-> token
-                  (s/replace #"#" "")
-                  (s/split #"&"))
-            r (apply hash-map (reduce (fn [acc e]
-                                        (concat acc (s/split e #"=")))
-                                      []
-                                      h))]
-        (js/console.log (str r)))))
   [:div.container
    [:h1.title.is-4 "Callback"]])
 
@@ -69,7 +75,7 @@
       :view callback
       :controllers [{:start (fn [_] 
                               ((log-fn "start" "callback controller"))
-                              (swap! token assoc :token (js->clj (.. js/window -location -hash))))
+                              (parse-token)) 
                      :stop (log-fn "stop" "callback controller")}]}]]
    {:data {:controllers [{:start (log-fn "start" "root-controller")
                            :stop (log-fn "stop" "root controller")}]
