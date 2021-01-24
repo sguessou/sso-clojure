@@ -5,9 +5,12 @@
             [reitit.frontend.easy :as rfe]
             [reitit.frontend.controllers :as rfc]
             [reitit.coercion.schema :as rsc]
-            [fipp.edn :as fedn]))
+            [fipp.edn :as fedn]
+            [clojure.string :as s]))
 
 (defonce match (r/atom nil))
+
+(defonce token (r/atom nil))
 
 (defn current-page []
   [:div.container
@@ -30,7 +33,17 @@
    [:h1.title.is-4 "Services"]])
 
 (defn callback []
-  (js/console.log "h3llo")
+  (js/console.log (:token @token))
+  (let [token (:token @token)]
+    (when token
+      (let [h (-> token
+                  (s/replace #"#" "")
+                  (s/split #"&"))
+            r (apply hash-map (reduce (fn [acc e]
+                                        (concat acc (s/split e #"=")))
+                                      []
+                                      h))]
+        (js/console.log (str r)))))
   [:div.container
    [:h1.title.is-4 "Callback"]])
 
@@ -54,7 +67,9 @@
     ["callback"
      {:name ::callback
       :view callback
-      :controllers [{:start (log-fn "start" "callback controller")
+      :controllers [{:start (fn [_] 
+                              ((log-fn "start" "callback controller"))
+                              (swap! token assoc :token (js->clj (.. js/window -location -hash))))
                      :stop (log-fn "stop" "callback controller")}]}]]
    {:data {:controllers [{:start (log-fn "start" "root-controller")
                            :stop (log-fn "stop" "root controller")}]
