@@ -1,4 +1,5 @@
 (ns frontend.app
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
             [reitit.frontend :as rf]
@@ -6,7 +7,9 @@
             [reitit.frontend.controllers :as rfc]
             [reitit.coercion.schema :as rsc]
             [fipp.edn :as fedn]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]))
 
 (defonce match (r/atom nil))
 
@@ -56,6 +59,12 @@
 (defn log-fn [& params]
   (fn [_]
     (apply js/console.log params)))
+
+(defn get-services []
+  (go (let [response 
+            (<! (http/post "http://localhost:4000/billing/v1/services"
+                           {:form-params {:access_token (get-in @state [:token :access_token])}}))]
+        (prn (:status response)))))
 
 (def routes
   (rf/router

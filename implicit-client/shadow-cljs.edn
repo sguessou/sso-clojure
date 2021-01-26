@@ -7,7 +7,8 @@
  :dependencies
  [[reagent "1.0.0"]
   [metosin/reitit "0.5.11"]
-  [fipp "0.6.14"]]
+  [fipp "0.6.14"]
+  [cljs-http/cljs-http "0.1.46"]]
  
  
  :dev-http {8081 "public"}
