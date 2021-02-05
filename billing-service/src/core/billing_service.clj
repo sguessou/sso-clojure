@@ -28,6 +28,15 @@
         handler
         (assoc-in [:headers "Pragma"] "no-cache"))))
 
+(defn wrap-cors [handler]
+  (fn [request]
+    (-> request
+        handler
+        (assoc-in [:headers "Access-Control-Allow-Origin"] "http://localhost:8081")
+        (assoc-in [:headers "Access-Control-Allow-Methods"] "POST,GET,OPTIONS")
+        (assoc-in [:headers "Access-Control-Allow-Credentials"] "true")
+        (assoc-in [:headers "Access-Control-Allow-Headers"] ["Authorization"]))))
+
 (defn wrap-formats [handler]
   (-> handler
       (muuntaja/wrap-format)))
@@ -120,10 +129,16 @@
                                          :result (validate-token (get-token request))}})
     (response/ok "OK")))
 
+;; {:middleware [wrap-params #(wrap-cors %
+;;                                            :access-control-allow-origin [#".*"]
+;;                                            :access-control-allow-methods [:get :post :options]
+;;                                            :access-control-allow-credentials "true")]}
+
 (def routes
-  [["/billing/v1" {:middleware [wrap-params]}
+  [["/billing/v1" 
     ["/services" {:get services-handler
-                  :post test-request-handler}]]])
+                  :post test-request-handler
+                  :middleware [wrap-cors]}]]])
 
 (def handler
   (reitit/routes

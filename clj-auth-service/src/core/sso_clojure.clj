@@ -132,7 +132,8 @@
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
-   ["/services" {:get services-handler}]
+   ["/services" {:get services-handler
+                 :options services-handler}]
    ["/logout" {:get logout-handler}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
 

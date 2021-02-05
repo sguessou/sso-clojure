@@ -34,7 +34,7 @@
 (defn current-page []
   [:div.container
    [:div [:a {:href (rfe/href ::frontpage)} "Home"]]
-   [:div [:a {:href "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth?client_id=implicitClient&response_type=token&redirect_uri=http://localhost:8081/callback"} "Login"]]
+   [:div [:a {:href "http://localhost:8080/auth/realms/sso-test/protocol/openid-connect/auth?client_id=implicitClient&response_type=token&redirect_uri=http://localhost:8081/callback&scope=getBillingService"} "Login"]]
    [:div [:a {:href (rfe/href ::services)} "Services"]]
    [:div [:a {:href "/logout"} "Logout"]]
    [:h1.title.is-4 "Implicit Grant Type"]
@@ -62,9 +62,10 @@
 
 (defn get-services []
   (go (let [response 
-            (<! (http/post "http://localhost:4000/billing/v1/services"
-                           {:form-params {:access_token (get-in @state [:token :access_token])}}))]
-        (prn (:status response)))))
+            (<! (http/get "http://127.0.0.1:4000/billing/v1/services"
+                          {:headers {"Authorization" (str "Bearer " (get-in @state [:token :access_token]))
+                                     "Accept" "application/json"}}))]
+        (:body response))))
 
 (def routes
   (rf/router
@@ -77,7 +78,10 @@
     ["services"
      {:name ::services
       :view services
-      :controllers [{:start (log-fn "start" "services controller")
+      :controllers [{:start (fn [_] 
+                              ((log-fn "start" "services controller"))
+                              (let [services (get-services)]
+                                (prn (go (<! services)))))
                      :stop (log-fn "stop" "services controller")}]}]
     ["callback"
      {:name ::callback

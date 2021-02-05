@@ -9,7 +9,8 @@
         metosin/ring-http-response {:mvn/version "0.9.1"}
         selmer/selmer {:mvn/version "1.12.11"}
         com.taoensso/timbre {:mvn/version "5.1.0"}
-        ring/ring-codec {:mvn/version "1.1.2"}}
+        ring/ring-codec {:mvn/version "1.1.2"}
+        ring-cors/ring-cors {:mvn/version "0.1.13"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "1.0.0"}}}

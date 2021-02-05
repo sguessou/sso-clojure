@@ -589,7 +589,7 @@
     "fullScopeAllowed" : true,
     "nodeReRegistrationTimeout" : -1,
     "defaultClientScopes" : [ "web-origins", "role_list", "roles", "profile", "email" ],
-    "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+    "optionalClientScopes" : [ "address", "phone", "getBillingService", "offline_access", "microprofile-jwt" ]
   }, {
     "id" : "82e2d8f1-3d70-43be-a319-e5ed78f82fb9",
     "clientId" : "realm-management",
