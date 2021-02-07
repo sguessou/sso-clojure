@@ -65,7 +65,10 @@
             (<! (http/get "http://127.0.0.1:4000/billing/v1/services"
                           {:headers {"Authorization" (str "Bearer " (get-in @state [:token :access_token]))
                                      "Accept" "application/json"}}))]
-        (:body response))))
+        (let [services (->> (:body response)
+                            (.parse js/JSON)
+                            js->clj)]
+          (swap! state assoc :services services)))))
 
 (def routes
   (rf/router
@@ -80,8 +83,7 @@
       :view services
       :controllers [{:start (fn [_] 
                               ((log-fn "start" "services controller"))
-                              (let [services (get-services)]
-                                (prn (go (<! services)))))
+                              (get-services))
                      :stop (log-fn "stop" "services controller")}]}]
     ["callback"
      {:name ::callback
