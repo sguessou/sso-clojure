@@ -81,9 +81,15 @@
                               :redirect_uri (:redirect-uri config)
                               :client_id (:client-id config)}}))
 
+(defn- format-response [resp]
+  (-> resp
+      :body
+      parse-string
+      keywordize-keys))
+
 (defn- exchange-token []
   (let [token (get-token)]
-    (swap! app-var assoc :token (-> (:body token) parse-string keywordize-keys))
+    (swap! app-var assoc :token (format-response token))
     (log/info ::exchange-token {:token (get-in @app-var [:token :token_type])})
     (redirect (:landing-page config))))
 
@@ -129,12 +135,23 @@
       (swap! app-var assoc :service {:services []})
       (redirect (:landing-page config)))))
 
+(defn refresh-token [request]
+  (let [response
+        (client/post (:token-endpoint config)
+                     {:headers {"Content-Type" "application/x-www-form-urlencoded"}
+                      :basic-auth [(:client-id config) (:client-password config)]
+                      :form-params {:grant_type "refresh_token"
+                                    :refresh_token (get-in @app-var [:token :refresh_token])}})]
+    (log/info ::refresh-token {:token (format-response response)})
+    (redirect (:landing-page config))))
+
 (def routes
   [["/" {:get home-handler}]
    ["/login" {:get login-handler}]
    ["/services" {:get services-handler
                  :options services-handler}]
    ["/logout" {:get logout-handler}]
+   ["/refresh-token" {:get refresh-token}]
    ["/auth-code-redirect" {:get auth-code-redirect}]])
 
 (def handler
