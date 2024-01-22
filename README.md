@@ -21,7 +21,7 @@ To boot the container, run the command:
 ```
 $ docker-compose -f keycloak-postgres.yml up
 ```
-Keycloak will be available at this address: `http://localhost:8080/auth`  
+Keycloak will be available at this address: `http://localhost:8080`  
 You can log in as administrator with these credentials: `admin / admin`   
 The following command will allow us to import the preconfigured keycloak testing environment:
 ```
